@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width">
+
+    <title>Stereo Audio Playback Mixer</title>
+
+    <link rel="stylesheet" href="">
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+</head>
+
+<body>
+    <h1></h1>
+    <audio controls loop>
+        <source src="stereotrack.ogg" type="audio/ogg">
+        <source src="stereotrack.mp3" type="audio/mp3">
+        <p>Browser does not support HTML5 audio</p>
+    </audio>
+    <pre></pre>
+</body>
+<script>
+
+document.querySelector('audio').addEventListener('play', function() {
+  
+    var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    var myAudio = document.querySelector('audio');
+    var pre = document.querySelector('pre');
+    var myScript = document.querySelector('script');
+
+    pre.innerHTML = myScript.innerHTML;
+
+    var gainL = audioCtx.createGain();
+    var gainR = audioCtx.createGain();
+    var splitter = audioCtx.createChannelSplitter(2);
+
+    // Create a MediaElementAudioSourceNode
+    // Feed the HTMLMediaElement into it
+    var source = audioCtx.createMediaElementSource(myAudio);
+    //Connect the source to the splitter
+    source.connect(splitter, 0, 0);
+    //Connect splitter' outputs to each Gain Nodes
+    splitter.connect(gainL, 0);
+    splitter.connect(gainR, 1);
+
+    //Connect Left and Right Nodes to the output
+    //Assuming stereo as initial status
+    gainL.connect(audioCtx.destination, 0);
+    gainR.connect(audioCtx.destination, 0);
+    gainL.gain.value = 1;
+    gainR.gain.value = 1;
+
+    // Create a gain node
+    var gainNode = audioCtx.createGain();
+
+    // Create variables to store mouse pointer Y coordinate
+    // and HEIGHT of screen
+    var CurY;
+    var HEIGHT = window.innerHeight;//for top to bottom panning
+    var WIDTH = window.innerWidth;//for left to right panning
+
+    // Get new mouse pointer coordinates when mouse is moved
+    // then set new gain value
+
+    document.onmousemove = updatePage;
+
+    function updatePage(e) {
+        CurX = (window.Event) ? e.pageX : event.clientX + (document.documentElement.scrollWidth ? document.documentElement.scrollWidth : document.body.scrollWidth);
+
+        //left to right panning
+        var gainLValue = 1 * CurX / WIDTH;
+        var gainRValue = 1 - CurX / WIDTH;
+        //top to bottom panning
+        //        CurY = (window.Event) ? e.pageY : event.clientY + (document.documentElement.scrollTop ? document.documentElement.scrollTop : document.body.scrollTop);
+        //    var gainLValue = 1 * CurY/HEIGHT;
+        //    var gainRValue = 1 - CurY/HEIGHT;
+
+        gainL.gain.value = gainLValue;
+        gainR.gain.value = gainRValue;
+    }
+
+    //Mute left channel and set the right gain to normal
+    function panToRight() {
+        gainL.gain.value = 0;
+        gainR.gain.value = 1;
+    }
+
+    //Mute right channel and set the left gain to normal
+    function panToLeft() {
+        gainL.gain.value = 1;
+        gainR.gain.value = 0;
+    }
+
+    gainNode.connect(audioCtx.destination);
+
+  console.log("click")
+  // Setup all nodes
+
+});
+
+
+</script>
+
+</html>
